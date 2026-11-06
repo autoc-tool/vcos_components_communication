@@ -134,7 +134,11 @@ class PduRRule():
             if "DefinitionRef" not in pdurdestpdu or pdurdestpdu[
               "DefinitionRef"] != "/AUTOSAR/EcucDefs/PduR/PduRRoutingPaths/PduRDestPdu":
                 continue
-            dstpduhandleid = int(pdurdestpdu["PduRDestPduHandleId"]["Value"])
+            handle = (pdurdestpdu.get("PduRDestPduHandleId") or {})
+            handle_val = handle.get("Value") if isinstance(handle, dict) else None
+            if handle_val is None or handle_val == "":
+                continue  # OPT [0..1]
+            dstpduhandleid = int(handle_val)
             if dstpduhandleid > maxroutingpathcnt:
                 valid = False and valid
                 self.log += "the value {} of /ActiveEcuC/PduR/PduRRoutingPaths/PduRDestPdu/{}/PduRDestPduHandleId is not less than the maximum value:{}".format(dstpduhandleid, name, maxroutingpathcnt) + \
@@ -174,7 +178,11 @@ class PduRRule():
             if "DefinitionRef" not in pdurdestpdu or pdurdestpdu[
               "DefinitionRef"] != "/AUTOSAR/EcucDefs/PduR/PduRRoutingPaths/PduRDestPdu":
                 continue
-            dstpduhandleid = int(pdurdestpdu["PduRDestPduHandleId"]["Value"])
+            handle = (pdurdestpdu.get("PduRDestPduHandleId") or {})
+            handle_val = handle.get("Value") if isinstance(handle, dict) else None
+            if handle_val is None or handle_val == "":
+                continue  # OPT [0..1]
+            dstpduhandleid = int(handle_val)
             if dstpduhandleid > maxroutingpathgroupcnt:
                 valid = False and valid
                 self.log += "the value {} of /ActiveEcuC/PduR/PduRRoutingPaths/PduRDestPdu/{}/PduRDestPduHandleId is not less than the maximum value:{}".format(dstpduhandleid, name, maxroutingpathgroupcnt) + \
@@ -196,7 +204,12 @@ class PduRRule():
             if not AutosarUtil.get_by_path_from_dict(pdurdestpdu, "/PduRDestPduRef/ValueRef"):
                 continue
             pdurdestpduref_path = pdurdestpdu["PduRDestPduRef"]["ValueRef"]
-            pdurdestpdudataprovision = pdurdestpdu["PduRDestPduDataProvision"]["Value"]
+            # BSWMD OPT + DEFAULT PDUR_DIRECT — do not FAIL on absence
+            _prov_node = pdurdestpdu.get("PduRDestPduDataProvision")
+            if isinstance(_prov_node, dict) and _prov_node.get("Value") is not None and str(_prov_node.get("Value")).strip() != "":
+                pdurdestpdudataprovision = _prov_node["Value"]
+            else:
+                pdurdestpdudataprovision = "PDUR_DIRECT"
             # ignore: lin diagnostic frames
             if "MasterReq" in pdurdestpduref_path or "SlaveResp" in pdurdestpduref_path:
                 continue
