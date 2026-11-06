@@ -141,7 +141,14 @@ if(CONFIG_MODULE_CANIF)
     endif()
 
     # Can driver
-    if (CONFIG_ARCH_SIM)
+    if (CONFIG_MODULE_CAN AND NOT CONFIG_SIM_CAN_DRIVER)
+        # AutoC PC MCAL (autoc_mcal/Can -> pc_can_driver)
+        list(APPEND INCLUDE_DIR
+            ${NUTTX_APPS_DIR}/components/autoc_mcal/Can/inc
+            ${GENDATA_DIR}/Can
+            ${GENDATA_DIR}/Memmap
+        )
+    elseif (CONFIG_ARCH_SIM)
         list(APPEND INCLUDE_DIR
             ${SIM_DRIVERS_CANSTACK_INCLUDE_DIRS}
             ${SIM_DRIVERS_DIR}/spi/inc
@@ -179,7 +186,9 @@ if(CONFIG_MODULE_CANIF)
     target_sources(can_canif PRIVATE ${CANIF_CAN_SRCS})
     target_include_directories(can_canif PRIVATE ${INCLUDE_DIR})
 
-    if (CONFIG_ARCH_SIM)
+    if (CONFIG_MODULE_CAN AND NOT CONFIG_SIM_CAN_DRIVER)
+        target_link_libraries(can_canif PRIVATE pc_can_driver)
+    elseif (CONFIG_ARCH_SIM)
         target_link_libraries(can_canif PRIVATE sim_can)
     elseif(CONFIG_ARCH_CHIP_CUSTOM_TC397)
         target_link_libraries(can_canif PRIVATE can_driver)
